@@ -4,7 +4,7 @@ pipeline {
     }
     stages {
         stage("Tests") {
-            step {
+            steps {
                 sh "./mvnw verify"
             }
         }
