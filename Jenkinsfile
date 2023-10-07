@@ -2,6 +2,9 @@ pipeline {
     agent { 
         node { label "maven" }
     }
+
+    environment { QUAY = credentials('QUAY_USER') }
+
     stages {
         stage("Tests") {
             steps {
@@ -9,7 +12,6 @@ pipeline {
             }
         }
         stage("Build & Push") {
-            environment { QUAY = credentials('QUAY_USER') }
             steps {
                 sh './mvnw quarkus:add-extension -Dextensions="container-image-jib"'
                 sh '''
@@ -25,6 +27,28 @@ pipeline {
                         -Dquarkus.container-image.additional-tags=latest \
                         -Dquarkus.container-image.push=true
                 '''
+            }
+        }
+        stage('Deploy to TEST') {
+            when { not { branch "main" } }
+
+            steps {
+                sh """
+                    oc set image deployment home-automation \
+                    home-automation=quay.io/${QUAY_USR}/do400-deploying-lab:build-${BUILD_NUMBER} \
+                    -n qhadms-deploying-lab-test --record
+                """
+            }
+        }
+        stage('Deploy to PROD') {
+            when { branch "main" }
+
+            steps {
+                sh """
+                    oc set image deployment home-automation \
+                    home-automation=quay.io/${QUAY_USR}/do400-deploying-lab:build-${BUILD_NUMBER} \
+                    -n qhadms-deploying-lab-prod --record
+                """
             }
         }
     }
