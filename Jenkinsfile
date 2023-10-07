@@ -12,8 +12,6 @@ pipeline {
             environment { QUAY = credentials('QUAY_USER') }
             steps {
                 sh './mvnw quarkus:add-extension -Dextensions="container-image-jib"'
-            }
-            steps {
                 sh '''
                     ./mvnw package -DskipTests \
                         -Dquarkus.jib.base-jvm-image=quay.io/redhattraining/do400-java-alpine-openjdk11-jre:latest \
